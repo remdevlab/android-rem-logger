@@ -1,0 +1,1 @@
+add logic for check permissions (e.g. - write external storage) before init and print logs

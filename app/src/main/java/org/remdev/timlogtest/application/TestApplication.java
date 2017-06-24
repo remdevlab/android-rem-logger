@@ -6,6 +6,8 @@ import android.os.Environment;
 import org.remdev.timlog.LogFactory;
 import org.remdev.timlog.LogToFileTree;
 
+import java.io.File;
+
 import timber.log.Timber;
 
 public class TestApplication extends Application {
@@ -14,7 +16,7 @@ public class TestApplication extends Application {
         super.onCreate();
         LogToFileTree logToFileTree = new LogToFileTree.Builder()
                 .logFileName("test-logs.log")
-                .logsDir(Environment.getExternalStorageDirectory().getAbsolutePath() + "logs")
+                .logsDir(Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "logs")
                 .fileSizeMB(2)
                 .build();
         LogFactory.configure(new Timber.DebugTree(), logToFileTree);
