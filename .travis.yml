@@ -9,7 +9,7 @@ android:
 jdk:
 - oraclejdk8
 script:
-- "./gradlew clean check"
+- "./gradlew assembleRelease"
 after_success:
 - ".buildscript/deploy_snapshot.sh"
 branches:
