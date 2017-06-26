@@ -8,6 +8,8 @@ android:
   - android-25
 jdk:
 - oraclejdk8
+before_script:
+  ".buildscript/test.sh"
 script:
 - "./gradlew uploadArchives"
 after_success:
