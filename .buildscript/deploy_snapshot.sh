@@ -9,6 +9,8 @@ SLUG="remdevlab/android-rem-timlog"
 JDK="oraclejdk8"
 BRANCH="master"
 
+echo "Testing envs: "$TEST_ENV
+
 set -e
 
 if [ "$TRAVIS_REPO_SLUG" != "$SLUG" ]; then
