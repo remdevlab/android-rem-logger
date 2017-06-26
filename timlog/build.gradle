@@ -21,9 +21,9 @@ android {
         lintConfig file('lint.xml')
     }
 
-    dexOptions {
+  /*  dexOptions {
         preDexLibraries = !rootProject.ext.isCi
-    }
+    }*/
 
     defaultConfig {
         minSdkVersion rootProject.ext.minSdkVersion
