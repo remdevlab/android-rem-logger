@@ -11,7 +11,7 @@ jdk:
 script:
   - bash test.sh
   - bash .buildscript/test.sh
-- "./gradlew uploadArchives"
+  - "./gradlew uploadArchives"
 after_success:
 - ".buildscript/deploy_snapshot.sh"
 branches:
