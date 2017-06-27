@@ -9,7 +9,7 @@ android:
 jdk:
 - oraclejdk8
 before_script:
-  - bash buildscript/test.sh
+  - bash .buildscript/test.sh
 script:
 - "./gradlew uploadArchives"
 after_success:
