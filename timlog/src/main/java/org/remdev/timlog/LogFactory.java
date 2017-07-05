@@ -34,11 +34,23 @@ public final class LogFactory {
         configure(new ConsoleTree());
     }
 
+    public static Log create(Object obj) {
+        String tag = "TAG-NULL";
+        if (obj != null){
+            tag = obj.getClass().getSimpleName();
+        }
+        return new SimpleLog(tag);
+    }
+
     /**
      * Creates simple logger with class name as a tag
      */
     public static Log create(Class<?> cls) {
-        return new SimpleLog(cls.getName());
+        return  create(cls.getName());
+    }
+
+    public static Log create(String tag) {
+        return new SimpleLog(tag);
     }
 
     private static LogFactory getInstance(Timber.Tree primary) {
