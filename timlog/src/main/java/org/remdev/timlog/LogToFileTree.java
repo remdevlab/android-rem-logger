@@ -38,7 +38,7 @@ public class LogToFileTree extends Timber.DebugTree {
 
     private void configure() {
         String externalFilesDir = this.logsDir.endsWith(File.separator) ? this.logsDir : this.logsDir + File.separator;
-        File logsDirectory = new File(externalFilesDir + this.logsDir);
+        File logsDirectory = new File(externalFilesDir);
         boolean fileOk = logsDirectory.exists() || logsDirectory.mkdirs();
         if (fileOk) {
             final String logDirectory = logsDirectory.getPath();
