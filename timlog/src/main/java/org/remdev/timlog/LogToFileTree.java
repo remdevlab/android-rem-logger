@@ -7,14 +7,21 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.charset.Charset;
+import java.util.Date;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.rolling.DefaultTimeBasedFileNamingAndTriggeringPolicy;
 import ch.qos.logback.core.rolling.RollingFileAppender;
 import ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP;
 import ch.qos.logback.core.rolling.TimeBasedRollingPolicy;
+import ch.qos.logback.core.rolling.helper.ArchiveRemover;
+import ch.qos.logback.core.rolling.helper.FileFilterUtil;
+import ch.qos.logback.core.rolling.helper.FileNamePattern;
+import ch.qos.logback.core.rolling.helper.SizeAndTimeBasedArchiveRemover;
+import ch.qos.logback.core.util.FileSize;
 import ch.qos.logback.core.util.StatusPrinter;
 import timber.log.Timber;
 
@@ -65,10 +72,13 @@ public class LogToFileTree extends Timber.DebugTree {
 
         TimeBasedRollingPolicy<ILoggingEvent> rollingPolicy = new TimeBasedRollingPolicy<>();
         rollingPolicy.setContext(loggerContext);
-        rollingPolicy.setFileNamePattern(logDirectory + File.separator + logFileName + ".%d{yyyy-MM-dd}.%i.log");
+        String fileNamePatternStr = logDirectory + File.separator + logFileName + ".%d{yyyy-MM-dd}.%i.log";
+        rollingPolicy.setFileNamePattern(fileNamePatternStr);
         rollingPolicy.setMaxHistory(historyLength);
         rollingPolicy.setTimeBasedFileNamingAndTriggeringPolicy(fileNamingPolicy);
         rollingPolicy.setParent(rollingFileAppender);  // parent and context required!
+        rollingPolicy.setCleanHistoryOnStart(true);
+        rollingPolicy.setTimeBasedFileNamingAndTriggeringPolicy(new ILoggingEventSizeAndTimeBasedFNATP(fileNamePatternStr));
         rollingPolicy.start();
 
         PatternLayoutEncoder encoder = new PatternLayoutEncoder();
@@ -113,7 +123,7 @@ public class LogToFileTree extends Timber.DebugTree {
     public static class Builder {
         private String logFileName = "app-log.txt";
         private String logsDir = "";
-        private int fileSizeKB = 1024;
+        private int fileSizeKB = 0;
         private int historyLength = 10;
         private Level level = Level.ALL;
 
@@ -155,6 +165,43 @@ public class LogToFileTree extends Timber.DebugTree {
 
         public LogToFileTree build() {
             return new LogToFileTree(logFileName, logsDir, fileSizeKB, historyLength, level);
+        }
+    }
+
+    private static class ILoggingEventSizeAndTimeBasedFNATP extends SizeAndTimeBasedFNATP<ILoggingEvent> {
+        private final String fileNamePatternStr;
+
+        public ILoggingEventSizeAndTimeBasedFNATP(String fileNamePatternStr) {
+            this.fileNamePatternStr = fileNamePatternStr;
+        }
+
+        @Override
+        protected ArchiveRemover createArchiveRemover() {
+            FileNamePattern fileNamePattern = new FileNamePattern(fileNamePatternStr, this.context);
+            return new SizeAndTimeBasedArchiveRemover(fileNamePattern, rc) {
+                @Override
+                public void cleanByPeriodOffset(Date now, int periodOffset) {
+                    Date dateOfPeriodToClean = rc.getRelativeDate(now, periodOffset);
+
+                    String regex = fileNamePattern.toRegexForFixedDate(dateOfPeriodToClean);
+                    String stemRegex = FileFilterUtil.afterLastSlash(regex);
+                    File archive0 = new File(fileNamePattern.convertMultipleArguments(
+                            dateOfPeriodToClean, 0));
+                    // in case the file has no directory part, i.e. if it's written into the
+                    // user's current directory.
+                    archive0 = archive0.getAbsoluteFile();
+
+                    File parentDir = archive0.getAbsoluteFile().getParentFile();
+                    File[] matchingFileArray = FileFilterUtil.filesInFolderMatchingStemRegex(
+                            parentDir, stemRegex);
+                    if (matchingFileArray == null) {
+                        return;
+                    }
+                    for (File f : matchingFileArray) {
+                        f.delete();
+                    }
+                }
+            };
         }
     }
 }
