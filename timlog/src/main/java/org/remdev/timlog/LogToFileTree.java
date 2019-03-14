@@ -7,20 +7,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.charset.Charset;
-import java.util.Date;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.rolling.DefaultTimeBasedFileNamingAndTriggeringPolicy;
 import ch.qos.logback.core.rolling.RollingFileAppender;
-import ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP;
-import ch.qos.logback.core.rolling.TimeBasedRollingPolicy;
-import ch.qos.logback.core.rolling.helper.ArchiveRemover;
-import ch.qos.logback.core.rolling.helper.FileFilterUtil;
-import ch.qos.logback.core.rolling.helper.FileNamePattern;
-import ch.qos.logback.core.rolling.helper.SizeAndTimeBasedArchiveRemover;
+import ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy;
 import ch.qos.logback.core.util.FileSize;
 import ch.qos.logback.core.util.StatusPrinter;
 import timber.log.Timber;
@@ -29,14 +22,14 @@ public class LogToFileTree extends Timber.DebugTree {
     private static Logger mLogger = LoggerFactory.getLogger(LogToFileTree.class);
     private final String logFileName;
     private final String logsDir;
-    private final int fileSizeKB;
+    private final int fileSizeInBytes;
     private final int historyLength;
     private final Level level;
 
-    public LogToFileTree(String logFileName, String logsDir, int fileSizeKB, int historyLength, Level level) {
+    public LogToFileTree(String logFileName, String logsDir, int fileSizeInBytes, int historyLength, Level level) {
         this.logFileName = logFileName;
         this.logsDir = logsDir;
-        this.fileSizeKB = fileSizeKB;
+        this.fileSizeInBytes = fileSizeInBytes;
         this.historyLength = historyLength;
         this.level = level;
 
@@ -66,19 +59,15 @@ public class LogToFileTree extends Timber.DebugTree {
         rollingFileAppender.setAppend(true);
         rollingFileAppender.setFile(logDirectory + File.separator + logFileName + ".log");
 
-        SizeAndTimeBasedFNATP<ILoggingEvent> fileNamingPolicy = new SizeAndTimeBasedFNATP<>();
-        fileNamingPolicy.setContext(loggerContext);
-        fileNamingPolicy.setMaxFileSize(fileSizeKB + "KB");
-
-        TimeBasedRollingPolicy<ILoggingEvent> rollingPolicy = new TimeBasedRollingPolicy<>();
+        SizeAndTimeBasedRollingPolicy<ILoggingEvent> rollingPolicy = new SizeAndTimeBasedRollingPolicy<>();
         rollingPolicy.setContext(loggerContext);
-        String fileNamePatternStr = logDirectory + File.separator + logFileName + ".%d{yyyy-MM-dd}.%i.log";
-        rollingPolicy.setFileNamePattern(fileNamePatternStr);
+        rollingPolicy.setTotalSizeCap(new FileSize(fileSizeInBytes * historyLength + 1));
+        rollingPolicy.setMaxFileSize(new FileSize(fileSizeInBytes));
         rollingPolicy.setMaxHistory(historyLength);
-        rollingPolicy.setTimeBasedFileNamingAndTriggeringPolicy(fileNamingPolicy);
+        String fileNamePatternStr = logDirectory + File.separator + logFileName + ".%d{yyyy-MM-dd,UTC}.%i.log";
+        rollingPolicy.setFileNamePattern(fileNamePatternStr);
         rollingPolicy.setParent(rollingFileAppender);  // parent and context required!
         rollingPolicy.setCleanHistoryOnStart(true);
-        rollingPolicy.setTimeBasedFileNamingAndTriggeringPolicy(new ILoggingEventSizeAndTimeBasedFNATP(fileNamePatternStr));
         rollingPolicy.start();
 
         PatternLayoutEncoder encoder = new PatternLayoutEncoder();
@@ -141,7 +130,7 @@ public class LogToFileTree extends Timber.DebugTree {
             if (fileSizeKB <= 0) {
                 throw new IllegalArgumentException("File size should be greater than 0");
             }
-            this.fileSizeKB = fileSizeKB;
+            this.fileSizeKB = fileSizeKB * 1024;
             return this;
         }
 
@@ -149,7 +138,7 @@ public class LogToFileTree extends Timber.DebugTree {
             if (fileSizeMB <= 0) {
                 throw new IllegalArgumentException("File size should be greater than 0");
             }
-            this.fileSizeKB = fileSizeMB * 1024;
+            this.fileSizeKB = fileSizeMB * 1024 * 1024;
             return this;
         }
 
@@ -165,43 +154,6 @@ public class LogToFileTree extends Timber.DebugTree {
 
         public LogToFileTree build() {
             return new LogToFileTree(logFileName, logsDir, fileSizeKB, historyLength, level);
-        }
-    }
-
-    private static class ILoggingEventSizeAndTimeBasedFNATP extends SizeAndTimeBasedFNATP<ILoggingEvent> {
-        private final String fileNamePatternStr;
-
-        public ILoggingEventSizeAndTimeBasedFNATP(String fileNamePatternStr) {
-            this.fileNamePatternStr = fileNamePatternStr;
-        }
-
-        @Override
-        protected ArchiveRemover createArchiveRemover() {
-            FileNamePattern fileNamePattern = new FileNamePattern(fileNamePatternStr, this.context);
-            return new SizeAndTimeBasedArchiveRemover(fileNamePattern, rc) {
-                @Override
-                public void cleanByPeriodOffset(Date now, int periodOffset) {
-                    Date dateOfPeriodToClean = rc.getRelativeDate(now, periodOffset);
-
-                    String regex = fileNamePattern.toRegexForFixedDate(dateOfPeriodToClean);
-                    String stemRegex = FileFilterUtil.afterLastSlash(regex);
-                    File archive0 = new File(fileNamePattern.convertMultipleArguments(
-                            dateOfPeriodToClean, 0));
-                    // in case the file has no directory part, i.e. if it's written into the
-                    // user's current directory.
-                    archive0 = archive0.getAbsoluteFile();
-
-                    File parentDir = archive0.getAbsoluteFile().getParentFile();
-                    File[] matchingFileArray = FileFilterUtil.filesInFolderMatchingStemRegex(
-                            parentDir, stemRegex);
-                    if (matchingFileArray == null) {
-                        return;
-                    }
-                    for (File f : matchingFileArray) {
-                        f.delete();
-                    }
-                }
-            };
         }
     }
 }
