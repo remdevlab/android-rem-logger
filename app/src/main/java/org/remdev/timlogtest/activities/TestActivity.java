@@ -1,7 +1,8 @@
 package org.remdev.timlogtest.activities;
 
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import org.remdev.timlog.Log;
 import org.remdev.timlog.LogFactory;
@@ -29,5 +30,6 @@ public class TestActivity extends AppCompatActivity {
         log.i("onResume at %d", System.currentTimeMillis());
         logString.i("onResume at %d", System.currentTimeMillis());
         logObj.i("onResume at %d", System.currentTimeMillis());
+        logObj.e(new Exception("TEST"),"test");
     }
 }
