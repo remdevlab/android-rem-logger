@@ -1,7 +1,6 @@
 package org.remdev.timlog;
 
 import android.util.Log;
-
 import timber.log.Timber;
 
 public class ConsoleTree extends Timber.Tree {
