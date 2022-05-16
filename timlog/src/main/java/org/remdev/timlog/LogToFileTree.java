@@ -52,7 +52,7 @@ public class LogToFileTree extends Timber.DebugTree {
         // reset the default context (which may already have been initialized)
         // since we want to reconfigure it
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-        loggerContext.reset();
+        //loggerContext.reset();
 
         RollingFileAppender<ILoggingEvent> rollingFileAppender = new RollingFileAppender<>();
         rollingFileAppender.setContext(loggerContext);

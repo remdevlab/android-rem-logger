@@ -2,6 +2,7 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
 android {
+    buildToolsVersion '30.0.3'
     compileSdkVersion 30
     defaultConfig {
         minSdkVersion 16
@@ -22,7 +23,6 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-    buildToolsVersion '30.0.3'
     testOptions {
         unitTests {
             includeAndroidResources = true
@@ -31,20 +31,19 @@ android {
 }
 
 dependencies {
-    api 'com.jakewharton.timber:timber:4.7.1'
-    api 'org.slf4j:slf4j-api:1.7.36'
+    implementation 'org.slf4j:slf4j-api:1.7.36'
     implementation 'com.github.tony19:logback-android:2.0.0'
 }
 
 def getArtifactVersion() {
-    return VERSION_NAME
+    return "flog"
 }
 
-def getArtifactGroup(){
+def getArtifactGroup() {
     return GROUP
 }
 
-def getArtifactName(){
+def getArtifactName() {
     return POM_ARTIFACT_ID
 }
 

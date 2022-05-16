@@ -1,1 +1,1 @@
-include ':app', ':timlog'
+include ':app', ':timlog', ':flog'
