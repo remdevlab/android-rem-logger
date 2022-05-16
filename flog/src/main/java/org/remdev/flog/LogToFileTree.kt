@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.charset.Charset
 
-class LogToFileTree private constructor(
+internal class LogToFileTree constructor(
     private var loggerName: String,
     private val logFileName: String,
     private val logsDir: String,
@@ -23,6 +23,11 @@ class LogToFileTree private constructor(
     private val level: Level
 ) : Flog {
     lateinit var logger: Logger
+
+    init {
+        configure()
+    }
+
     private fun configure() {
         val externalFilesDir =
             if (logsDir.endsWith(File.separator)) logsDir else logsDir + File.separator
@@ -88,57 +93,5 @@ class LogToFileTree private constructor(
         }
     }
 
-    class Builder {
-        private var loggerName = "undefined"
-        private var logFileName = "app-log.txt"
-        private var logsDir = ""
-        private var fileSizeKB = 0
-        private var historyLength = 10
-        private var level = Level.ALL
 
-        fun logger(name: String): Builder {
-            this.loggerName = name
-            return this
-        }
-
-        fun logFileName(logFileName: String): Builder {
-            this.logFileName = logFileName
-            return this
-        }
-
-        fun logsDir(logsDir: String): Builder {
-            this.logsDir = logsDir
-            return this
-        }
-
-        fun fileSizeKB(fileSizeKB: Int): Builder {
-            require(fileSizeKB > 0) { "File size should be greater than 0" }
-            this.fileSizeKB = fileSizeKB * 1024
-            return this
-        }
-
-        fun fileSizeMB(fileSizeMB: Int): Builder {
-            require(fileSizeMB > 0) { "File size should be greater than 0" }
-            fileSizeKB = fileSizeMB * 1024 * 1024
-            return this
-        }
-
-        fun historyLength(historyLength: Int): Builder {
-            this.historyLength = historyLength
-            return this
-        }
-
-        fun level(level: Level): Builder {
-            this.level = level
-            return this
-        }
-
-        fun build(): LogToFileTree {
-            return LogToFileTree(loggerName, logFileName, logsDir, fileSizeKB, historyLength, level)
-        }
-    }
-
-    init {
-        configure()
-    }
 }

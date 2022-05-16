@@ -3,7 +3,6 @@ package org.remdev.timlogtest.activities
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import org.remdev.flog.Holder
 import org.remdev.timlogtest.R
 import org.remdev.timlogtest.application.TestLoggerApplication.Companion.logFile1
 import org.remdev.timlogtest.application.TestLoggerApplication.Companion.logFile2

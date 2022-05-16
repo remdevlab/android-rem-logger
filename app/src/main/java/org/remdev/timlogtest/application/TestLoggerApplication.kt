@@ -3,7 +3,7 @@ package org.remdev.timlogtest.application
 import android.app.Application
 import android.os.Environment
 import org.remdev.flog.Flog
-import org.remdev.flog.Holder
+import org.remdev.flog.FlogBuilder
 import org.remdev.timlog.ConfigBasedLogToFileTree
 import org.remdev.timlog.LogFactory
 import org.remdev.timlog.LogToFileTree
@@ -20,18 +20,32 @@ class TestLoggerApplication : Application() {
             .historyLength(2)
             .build()
         LogFactory.configure(DebugTree(), configTree, logToFileTree)
-       setupLoggers()
+        setupLoggers()
     }
 
     private fun setupLoggers() {
-        logFile1 = Holder.getBuilder()
-            .logger("NAME1").logFileName("first").logsDir(cacheDir.absolutePath).build()
-        logFile2 = Holder.getBuilder()
-            .logger("NAME2").logFileName("second").logsDir(cacheDir.absolutePath).build()
+        logFile1 = FlogBuilder(this)
+            .logger("NAME1")
+            .logFileName("first")
+            .logsDir(cacheDir.absolutePath)
+            .build()
+        logFile2 = FlogBuilder(this)
+            .logger("NAME2")
+            .logFileName("second")
+            .logsDir(getLogsFolder())
+            .build()
     }
 
     companion object {
         lateinit var logFile1: Flog
         lateinit var logFile2: Flog
+    }
+
+    fun getLogsFolder(): String {
+        var path: String = cacheDir.absolutePath
+        externalCacheDir?.let {
+            path = it.absolutePath + File.separator + "LOGS"
+        }
+        return path
     }
 }
