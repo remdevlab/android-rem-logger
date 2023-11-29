@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.nio.charset.Charset;
 
+import ch.qos.logback.classic.AsyncAppender;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
@@ -32,7 +33,6 @@ public class LogToFileTree extends Timber.DebugTree {
         this.fileSizeInBytes = fileSizeInBytes;
         this.historyLength = historyLength;
         this.level = level;
-
         configure();
     }
 
@@ -80,11 +80,17 @@ public class LogToFileTree extends Timber.DebugTree {
         rollingFileAppender.setEncoder(encoder);
         rollingFileAppender.start();
 
+        AsyncAppender asyncAppender = new AsyncAppender();
+        asyncAppender.setContext(loggerContext);
+        asyncAppender.setName("ASYNC");
+        asyncAppender.addAppender(rollingFileAppender);
+        asyncAppender.start();
+
         // add the newly created appenders to the root logger;
         // qualify Logger to disambiguate from org.slf4j.Logger
         ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
         root.setLevel(level);
-        root.addAppender(rollingFileAppender);
+        root.addAppender(asyncAppender);
 
         // print any status messages (warnings, etc) encountered in logback config
         StatusPrinter.print(loggerContext);

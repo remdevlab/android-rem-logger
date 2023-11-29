@@ -1,6 +1,7 @@
 package org.remdev.flog
 
 import android.util.Log
+import ch.qos.logback.classic.AsyncAppender
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.LoggerContext
@@ -72,12 +73,18 @@ internal class LogToFileTree constructor(
         rollingFileAppender.name = loggerName
         rollingFileAppender.start()
 
+        val asyncAppender = AsyncAppender()
+        asyncAppender.context = loggerContext
+        asyncAppender.name = "ASYNC-SINGLETON"
+        asyncAppender.addAppender(rollingFileAppender)
+        asyncAppender.start()
+
         // add the newly created appenders to the root logger;
         // qualify Logger to disambiguate from org.slf4j.Logger
 
         logger = LoggerFactory.getLogger(loggerName) as Logger
         logger.level = level
-        logger.addAppender(rollingFileAppender)
+        logger.addAppender(asyncAppender)
         logger.isAdditive = false
         // print any status messages (warnings, etc) encountered in logback config
         StatusPrinter.print(loggerContext)
